@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Spin the wheel for encouraging affirmations!">
+    <title>Affirmation Spinner</title>
+    <style>
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --card-bg: #ffffff;
+            --text-primary: #333;
+            --text-secondary: #6c757d;
+            --border-color: #dee2e6;
+            --wheel-bg: #fff;
+        }
+
+        body.dark-mode {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --card-bg: #0f3460;
+            --text-primary: #e8e8e8;
+            --text-secondary: #b0b0b0;
+            --border-color: #3a506b;
+            --wheel-bg: #1c2841;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .main-content {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 0 auto 40px;
+        }
+
+        #wheelCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff6b6b;
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+            z-index: 10;
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-small {
+            padding: 8px 20px;
+            font-size: 0.9em;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 100px;
+        }
+
+        body.dark-mode .result {
+            background: var(--wheel-bg);
+        }
+
+        .result h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        .result p {
+            color: var(--text-secondary);
+            margin: 5px 0;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .filter-group {
+            margin-bottom: 30px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s;
+            color: var(--text-primary);
+        }
+
+        .filter-group label:hover {
+            background: #f8f9fa;
+        }
+
+        body.dark-mode .filter-group label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .filter-group input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .wheel-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1;
+                max-width: 400px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <h1>Affirmation Spinner</h1>
+
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <canvas id="wheelCanvas"></canvas>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="spinBtn" onclick="spin()">Spin for Affirmation</button>
+            </div>
+
+            <div class="result" id="result">
+                <p style="color: var(--text-secondary);">Click spin to get your affirmation!</p>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h3>Settings</h3>
+            <div style="margin-bottom: 20px;">
+                <button id="darkModeToggle" class="btn btn-small" onclick="toggleDarkMode()" style="width: 100%; margin-bottom: 10px;">
+                    <span id="darkModeIcon">🌙</span> <span id="darkModeText">Dark Mode</span>
+                </button>
+
+                <button id="soundToggle" class="btn btn-small" onclick="toggleSound()" style="width: 100%; margin-bottom: 10px;">
+                    <span id="soundIcon">🔊</span> <span id="soundText">Sound On</span>
+                </button>
+            </div>
+
+            <h3>Filter by Category</h3>
+            <div class="filter-group" id="categoryFilters">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Affirmations organized by category
+        const affirmations = [
+            // Workout (10)
+            { id: 1, text: "Go build that strength!", category: "Workout" },
+            { id: 2, text: "Your streak continues today!", category: "Workout" },
+            { id: 3, text: "Make those muscles proud!", category: "Workout" },
+            { id: 4, text: "Earn that post-workout feeling!", category: "Workout" },
+            { id: 5, text: "Go get those endorphins!", category: "Workout" },
+            { id: 6, text: "Show that workout who's boss!", category: "Workout" },
+            { id: 7, text: "Future-you will thank you!", category: "Workout" },
+            { id: 8, text: "Go make your Apple Watch happy!", category: "Workout" },
+            { id: 9, text: "Stronger every single day!", category: "Workout" },
+            { id: 10, text: "Your body is ready - go!", category: "Workout" },
+
+            // Work (10)
+            { id: 11, text: "Go lead your team well!", category: "Work" },
+            { id: 12, text: "They're lucky to have you!", category: "Work" },
+            { id: 13, text: "Go make the state better!", category: "Work" },
+            { id: 14, text: "Show 'em how it's done!", category: "Work" },
+            { id: 15, text: "Gov's office needs you - go!", category: "Work" },
+            { id: 16, text: "Go solve some problems!", category: "Work" },
+            { id: 17, text: "Supervisor mode: activated!", category: "Work" },
+            { id: 18, text: "Go be the leader they need!", category: "Work" },
+            { id: 19, text: "Make MNIT proud today!", category: "Work" },
+            { id: 20, text: "Your team's got this - you've trained them well!", category: "Work" },
+
+            // Class/School (10)
+            { id: 21, text: "Go get smarter!", category: "Class" },
+            { id: 22, text: "Future MPA coming through!", category: "Class" },
+            { id: 23, text: "Learn something good!", category: "Class" },
+            { id: 24, text: "Make Hamline proud!", category: "Class" },
+            { id: 25, text: "Go absorb some wisdom!", category: "Class" },
+            { id: 26, text: "Show that professor what you've got!", category: "Class" },
+            { id: 27, text: "Master's candidate in the house!", category: "Class" },
+            { id: 28, text: "Go build your brain!", category: "Class" },
+            { id: 29, text: "Class is lucky to have you!", category: "Class" },
+            { id: 30, text: "Go learn how to change the world!", category: "Class" },
+
+            // General/All-purpose (10)
+            { id: 31, text: "You've got this!", category: "General" },
+            { id: 32, text: "Go be amazing!", category: "General" },
+            { id: 33, text: "Crush it today!", category: "General" },
+            { id: 34, text: "Love you - go do great things!", category: "General" },
+            { id: 35, text: "Go be Ben!", category: "General" },
+            { id: 36, text: "The world's ready for you!", category: "General" },
+            { id: 37, text: "Go make today count!", category: "General" },
+            { id: 38, text: "You're going to be great!", category: "General" },
+            { id: 39, text: "Go show them your best!", category: "General" },
+            { id: 40, text: "Love you - now go be awesome!", category: "General" }
+        ];
+
+        // Global variables
+        let selectedCategories = [];
+        let currentRotation = 0;
+        let isSpinning = false;
+
+        // Configuration constants
+        const CONFIG = {
+            WHEEL_COLORS: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B88B', '#95E1D3'],
+            MIN_SPINS: 5,
+            MAX_SPINS: 8,
+            SPIN_DURATION: 4000
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const colors = CONFIG.WHEEL_COLORS;
+
+        // Sound effects
+        let soundEnabled = true;
+        let audioContext = null;
+
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSpinSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function playWinSound() {
+            if (!soundEnabled) return;
+            initAudioContext();
+
+            const notes = [261.63, 329.63, 392.00, 523.25];
+            notes.forEach((freq, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                const startTime = audioContext.currentTime + (index * 0.1);
+                oscillator.frequency.setValueAtTime(freq, startTime);
+
+                gainNode.gain.setValueAtTime(0.2, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.3);
+            });
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('soundEnabled', soundEnabled ? 'enabled' : 'disabled');
+
+            const icon = document.getElementById('soundIcon');
+            const text = document.getElementById('soundText');
+            if (soundEnabled) {
+                icon.textContent = '🔊';
+                text.textContent = 'Sound On';
+                playWinSound();
+            } else {
+                icon.textContent = '🔇';
+                text.textContent = 'Sound Off';
+            }
+        }
+
+        function initSound() {
+            const sound = localStorage.getItem('soundEnabled');
+            if (sound === 'disabled') {
+                soundEnabled = false;
+                document.getElementById('soundIcon').textContent = '🔇';
+                document.getElementById('soundText').textContent = 'Sound Off';
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (isDark) {
+                icon.textContent = '☀️';
+                text.textContent = 'Light Mode';
+            } else {
+                icon.textContent = '🌙';
+                text.textContent = 'Dark Mode';
+            }
+
+            drawWheel();
+        }
+
+        function initDarkMode() {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeIcon').textContent = '☀️';
+                document.getElementById('darkModeText').textContent = 'Light Mode';
+            }
+        }
+
+        function getFilteredAffirmations() {
+            if (selectedCategories.length === 0) {
+                return affirmations;
+            }
+            return affirmations.filter(a => selectedCategories.includes(a.category));
+        }
+
+        function updateCategoryFilters() {
+            const categories = [...new Set(affirmations.map(a => a.category))];
+            const container = document.getElementById('categoryFilters');
+            container.innerHTML = '';
+
+            categories.forEach(category => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" value="${category}" onchange="onCategoryChange()">
+                    ${category}
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        function onCategoryChange() {
+            selectedCategories = Array.from(document.querySelectorAll('#categoryFilters input:checked'))
+                .map(cb => cb.value);
+            drawWheel();
+        }
+
+        function resizeCanvas() {
+            const container = document.querySelector('.wheel-container');
+            const size = Math.min(container.offsetWidth, container.offsetHeight);
+            canvas.width = size;
+            canvas.height = size;
+            drawWheel();
+        }
+
+        function drawWheel() {
+            const filteredAffirmations = getFilteredAffirmations();
+
+            if (filteredAffirmations.length === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#f8f9fa';
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, 2 * Math.PI);
+                ctx.fill();
+
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No affirmations available', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const numSegments = filteredAffirmations.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            filteredAffirmations.forEach((affirmation, i) => {
+                const startAngle = i * anglePerSegment + currentRotation;
+                const endAngle = (i + 1) * anglePerSegment + currentRotation;
+
+                // Draw segment
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw text (simplified for many segments)
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + anglePerSegment / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#fff';
+                ctx.font = numSegments > 20 ? 'bold 10px Arial' : 'bold 14px Arial';
+                const maxLength = numSegments > 20 ? 15 : 25;
+                const displayText = affirmation.text.length > maxLength
+                    ? affirmation.text.substring(0, maxLength) + '...'
+                    : affirmation.text;
+                ctx.fillText(displayText, radius - 15, 5);
+                ctx.restore();
+            });
+
+            // Draw center circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function spin() {
+            if (isSpinning) return;
+
+            const filteredAffirmations = getFilteredAffirmations();
+            if (filteredAffirmations.length === 0) {
+                alert('No affirmations available with current filters!');
+                return;
+            }
+
+            playSpinSound();
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+
+            const numSegments = filteredAffirmations.length;
+            const anglePerSegment = (2 * Math.PI) / numSegments;
+
+            const spins = CONFIG.MIN_SPINS + Math.random() * (CONFIG.MAX_SPINS - CONFIG.MIN_SPINS);
+            const randomAngle = Math.random() * 2 * Math.PI;
+            const totalRotation = spins * 2 * Math.PI + randomAngle;
+
+            const duration = CONFIG.SPIN_DURATION;
+            const startTime = Date.now();
+            const startRotation = currentRotation;
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                currentRotation = startRotation + totalRotation * easeOut;
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
+                    showResult(filteredAffirmations, numSegments, anglePerSegment);
+                }
+            }
+
+            animate();
+        }
+
+        function triggerConfetti() {
+            const duration = 3000;
+            const animationEnd = Date.now() + duration;
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F7DC6F', '#98D8C8', '#BB8FCE'];
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const confettiInterval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    clearInterval(confettiInterval);
+                    return;
+                }
+
+                const particleCount = 3;
+
+                for (let i = 0; i < particleCount; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.opacity = '1';
+                    confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    confetti.style.zIndex = '10000';
+                    confetti.style.pointerEvents = 'none';
+                    confetti.style.borderRadius = '2px';
+
+                    document.body.appendChild(confetti);
+
+                    const duration = randomInRange(1000, 3000);
+                    const xMovement = randomInRange(-100, 100);
+                    const rotation = randomInRange(0, 720);
+
+                    confetti.animate([
+                        {
+                            transform: `translateY(0) translateX(0) rotate(0deg)`,
+                            opacity: 1
+                        },
+                        {
+                            transform: `translateY(${window.innerHeight}px) translateX(${xMovement}px) rotate(${rotation}deg)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: duration,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    }).onfinish = () => confetti.remove();
+                }
+            }, 50);
+        }
+
+        function showResult(filteredAffirmations, numSegments, anglePerSegment) {
+            const normalizedRotation = (currentRotation % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+            const pointerAngle = 3 * Math.PI / 2;
+            const selectedAngle = (2 * Math.PI - normalizedRotation + pointerAngle) % (2 * Math.PI);
+            const selectedIndex = Math.floor(selectedAngle / anglePerSegment) % numSegments;
+            const winner = filteredAffirmations[selectedIndex];
+
+            triggerConfetti();
+            playWinSound();
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <h2>${winner.text}</h2>
+                <p><strong>Category:</strong> ${winner.category}</p>
+            `;
+        }
+
+        function init() {
+            initDarkMode();
+            initSound();
+            updateCategoryFilters();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        init();
+    </script>
+</body>
+</html>
